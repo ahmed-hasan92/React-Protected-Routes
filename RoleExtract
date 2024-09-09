@@ -1,0 +1,38 @@
+import jwtDecode from "jwt-decode";
+import instance from ".";
+
+const login = async ({ email, password }) => {
+  const response = await instance.post("/user/login", {
+    email,
+    password,
+  });
+  const token = response.data?.token;
+  storeToken(token);
+
+  const decodedToken = jwtDecode(token); // Decode the token to get the role
+  return {
+    token,
+    role: decodedToken.role, // Assuming the role is stored in the token
+  };
+};
+
+const storeToken = (token) => {
+  localStorage.setItem("token", token);
+};
+
+const checkToken = () => {
+  const token = localStorage.getItem("token");
+
+  if (token) {
+    const decoded = jwtDecode(token);
+    const currentTime = Date.now() / 1000;
+    if (decoded.exp < currentTime) {
+      localStorage.removeItem("token");
+      return null;
+    }
+    return decoded; // Return the decoded token (including role)
+  }
+  return null;
+};
+
+export { checkToken, login };
